@@ -1,0 +1,52 @@
+/*GEOG 655 Lab5*/
+
+/*Question 1*/
+SELECT *
+FROM publicschools
+WHERE ST_Equals(geom, ST_GeometryFromText('POINT(413797.2016872928 124604.24301644415)', 0))
+ 
+/*Question 2*/
+SELECT *
+FROM publicschools
+WHERE ST_DWithin(geom, ST_GeometryFromText('POINT(413797.2016872928 124604.24301644415)', 0), 1000)
+
+/*Question 3*/
+SELECT *
+FROM pgcensustract
+WHERE ST_Contains(geom, ST_GeometryFromText('POINT(417108 129547)', 26985)) 
+
+/*Question 4*/
+SELECT *
+FROM pgroads
+WHERE ST_DWithin(
+ST_GeomFromText('POINT(406286 124178)'),
+geom,
+5000
+)
+
+/*Question 5*/
+SELECT fename, fetype
+FROM pgroads
+WHERE ST_DWithin(
+(SELECT geom FROM publicschools WHERE school_nam = 'Baden'),
+geom,
+1000
+)
+ORDER BY fename
+
+/*Question 6*/
+SELECT pgcensustract.geodesc, count(*)
+FROM publicschools
+JOIN pgcensustract
+ON ST_Contains(ST_AsText(pgcensustract.geom, 0), publicschools.geom)
+GROUP BY pgcensustract.geodesc
+
+/*Question 7*/
+/*Which public schools are located in the same census tracts as the Beltway?*/
+SELECT Distinct school_nam
+FROM pgcensustract
+JOIN pgroads
+ON ST_Intersects(ST_AsText(pgcensustract.geom, 0), ST_AsText(pgroads.geom, 0))
+JOIN publicschools
+ON ST_Within(publicschools.geom, ST_AsText(pgcensustract.geom, 0))
+WHERE pgroads.fename = 'Capital Beltway'
